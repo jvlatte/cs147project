@@ -18,17 +18,21 @@ const int micPin = 36;
 int soundLevel = 0;
 const int threshold = 500;
 
+const char *serverName = "http://3.16.38.103:5000";
 
 
 // Function to control haptic motor based on sound level.
 void controlVibration(int level) {
-  // If positive value, vibrate with intensity proportional to sound level.
-  if (level > 0) {
-    drv.setRealtimeValue(level); 
-  } else {
-    // Otherwise stop vibration.
-    drv.setRealtimeValue(0); 
-  }
+  // // If positive value, vibrate with intensity proportional to sound level.
+  // if (level > 0) {
+  //   drv.setRealtimeValue(level); 
+  // } else {
+  //   // Otherwise stop vibration.
+  //   drv.setRealtimeValue(0); 
+  // }
+
+  drv.setRealtimeValue(20); 
+
   // Play vibration.
   drv.go();
 }
@@ -88,6 +92,26 @@ void nvs_access()
   nvs_close(my_handle);
 }
 
+// Send sound data to AWS
+void sendToAWS(int level) {
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+    http.begin(serverName);
+    http.addHeader("Content-Type", "application/json");
+
+    String jsonPayload = "{\"soundLevel\": " + String(level) + "}";
+    int httpResponseCode = http.POST(jsonPayload);
+
+    if (httpResponseCode > 0) {
+      Serial.printf("HTTP Response code: %d\n", httpResponseCode);
+    } else {
+      Serial.printf("Error in sending POST: %s\n", http.errorToString(httpResponseCode).c_str());
+    }
+    http.end();
+  } else {
+    Serial.println("WiFi not connected");
+  }
+}
 
 void setup() {
   Serial.begin(9600);
@@ -134,6 +158,7 @@ void loop() {
   if (micValue < 0) micValue = -micValue;
 
   soundLevel = processSound(micValue);
+  sendToAWS(micValue);
 
   Serial.print("Mic Value 1: ");
   Serial.println(micValue);
