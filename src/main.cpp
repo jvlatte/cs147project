@@ -14,6 +14,10 @@
 Adafruit_DRV2605 drv;
 char ssid[50]; 
 char pass[50];
+const int micPin = 36;
+int soundLevel = 0;
+const int threshold = 500;
+
 
 
 // Function to control haptic motor based on sound level.
@@ -27,6 +31,12 @@ void controlVibration(int level) {
   }
   // Play vibration.
   drv.go();
+}
+
+// Process sound value to calculate sound level
+int processSound(int micValue) {
+  // Convert raw mic value to a usable sound level (adjust as necessary)
+  return micValue > threshold ? map(micValue, threshold, 4095, 0, 255) : 0;
 }
 
 void nvs_access()
@@ -83,6 +93,26 @@ void setup() {
   Serial.begin(9600);
   Serial.println("DRV2605 Output Test");
 
+  // Connect to WiFi
+  delay(1000);
+  nvs_access();
+  delay(1000);
+  Serial.println();
+  Serial.println();
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+  WiFi.begin(ssid, pass);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+  Serial.println("MAC address: ");
+  Serial.println(WiFi.macAddress());
+
   // Initialize DRV.
   if (!drv.begin()) {
     Serial.println("Could not find DRV...");
@@ -94,11 +124,21 @@ void setup() {
   drv.selectLibrary(1);
   // Set realtime vibration control.
   drv.setMode(DRV2605_MODE_REALTIME);
+  pinMode(micPin, INPUT);
 }
 
 void loop() {
   // Calculate sound level here...
+  int micValue = analogRead(micPin);
+  micValue = micValue - 625;
+  if (micValue < 0) micValue = -micValue;
+
+  soundLevel = processSound(micValue);
+
+  Serial.print("Mic Value 1: ");
+  Serial.println(micValue);
   
   // Generate vibration based on sound level.
   controlVibration(soundLevel);
+  delay(100);
 }
