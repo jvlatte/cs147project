@@ -4,6 +4,19 @@
 
 Adafruit_DRV2605 drv;
 
+// Function to control haptic motor based on sound level.
+void controlVibration(int level) {
+  // If positive value, vibrate with intensity proportional to sound level.
+  if (level > 0) {
+    drv.setRealtimeValue(level); 
+  } else {
+    // Otherwise stop vibration.
+    drv.setRealtimeValue(0); 
+  }
+  // Play vibration.
+  drv.go();
+}
+
 void setup() {
   Serial.begin(9600);
   Serial.println("DRV2605 Output Test");
@@ -17,23 +30,13 @@ void setup() {
 
   // Set the haptic mode for vibrating motor disc.
   drv.selectLibrary(1);
-  // Set internal trigger mode.
-  drv.setMode(DRV2605_MODE_INTTRIG); 
+  // Set realtime vibration control.
+  drv.setMode(DRV2605_MODE_REALTIME);
 }
 
 void loop() {
-  // Try preset effects 1 to 10. 
-  for (uint8_t effect = 1; effect <= 10; effect++) { 
-    Serial.print("Playing effect #");
-    Serial.println(effect);
-
-    // Set effect for slot 0.
-    drv.setWaveform(0, effect); 
-    // End waveform with 0 to stop.
-    drv.setWaveform(1, 0);     
+  // Calculate sound level here...
   
-    // Play pattern then wait a second before the next effect.
-    drv.go(); 
-    delay(1000); 
-  }
+  // Generate vibration based on sound level.
+  controlVibration(soundLevel);
 }
