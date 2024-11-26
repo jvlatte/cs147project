@@ -1,8 +1,20 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <Adafruit_DRV2605.h>
+#include <HTTPClient.h>
+#include <WiFi.h>
+#include <inttypes.h>
+#include <stdio.h>
+#include "esp_system.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "nvs.h"
+#include "nvs_flash.h"
 
 Adafruit_DRV2605 drv;
+char ssid[50]; 
+char pass[50];
+
 
 // Function to control haptic motor based on sound level.
 void controlVibration(int level) {
@@ -16,6 +28,56 @@ void controlVibration(int level) {
   // Play vibration.
   drv.go();
 }
+
+void nvs_access()
+{
+  // Initialize NVS
+  esp_err_t err = nvs_flash_init();
+  if (err == ESP_ERR_NVS_NO_FREE_PAGES ||
+      err == ESP_ERR_NVS_NEW_VERSION_FOUND)
+  {
+    // NVS partition was truncated and needs to be erased
+    // Retry nvs_flash_init
+    ESP_ERROR_CHECK(nvs_flash_erase());
+    err = nvs_flash_init();
+  }
+  ESP_ERROR_CHECK(err);
+  // Open
+  Serial.printf("\n");
+  Serial.printf("Opening Non-Volatile Storage (NVS) handle... ");
+  nvs_handle_t my_handle;
+  err = nvs_open("storage", NVS_READWRITE, &my_handle);
+  if (err != ESP_OK)
+  {
+    Serial.printf("Error (%s) opening NVS handle!\n", esp_err_to_name(err));
+  }
+  else
+  {
+    Serial.printf("Done\n");
+    Serial.printf("Retrieving SSID/PASSWD\n");
+    size_t ssid_len;
+    size_t pass_len;
+    err = nvs_get_str(my_handle, "ssid", ssid, &ssid_len);
+    err |= nvs_get_str(my_handle, "pass", pass, &pass_len);
+    switch (err)
+    {
+    case ESP_OK:
+      Serial.printf("Done\n");
+      // Serial.printf("SSID = %s\n", ssid);
+      // Serial.printf("PASSWD = %s\n", pass);
+      break;
+    case ESP_ERR_NVS_NOT_FOUND:
+      Serial.printf("The value is not initialized yet!\n");
+      break;
+    default:
+      Serial.printf("Error (%s) reading!\n", esp_err_to_name(err));
+    }
+  }
+  // Close
+
+  nvs_close(my_handle);
+}
+
 
 void setup() {
   Serial.begin(9600);
