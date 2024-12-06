@@ -14,7 +14,8 @@
 Adafruit_DRV2605 drv;
 char ssid[50]; 
 char pass[50];
-const int micPin = 36;
+const int micPin = 26;
+const int micPin2 = 36;
 int soundLevel = 0;
 const int threshold = 500;
 
@@ -23,25 +24,20 @@ const char *serverName = "http://3.16.38.103:5000";
 
 // Function to control haptic motor based on sound level.
 void controlVibration(int level) {
-  // // If positive value, vibrate with intensity proportional to sound level.
-  // if (level > 0) {
-  //   drv.setRealtimeValue(level); 
-  // } else {
-  //   // Otherwise stop vibration.
-  //   drv.setRealtimeValue(0); 
-  // }
+  // If positive value, vibrate with intensity proportional to sound level.
+  if (level > 0) {
+    drv.setRealtimeValue(level); 
+  } else {
+    // Otherwise stop vibration.
+    drv.setRealtimeValue(0); 
+  }
 
-  drv.setRealtimeValue(20); 
+  // drv.setRealtimeValue(20); 
 
   // Play vibration.
   drv.go();
 }
 
-// Process sound value to calculate sound level
-int processSound(int micValue) {
-  // Convert raw mic value to a usable sound level (adjust as necessary)
-  return micValue > threshold ? map(micValue, threshold, 4095, 0, 255) : 0;
-}
 
 void nvs_access()
 {
@@ -149,21 +145,27 @@ void setup() {
   // Set realtime vibration control.
   drv.setMode(DRV2605_MODE_REALTIME);
   pinMode(micPin, INPUT);
+  pinMode(micPin2, INPUT);
 }
 
 void loop() {
   // Calculate sound level here...
-  int micValue = analogRead(micPin);
-  micValue = micValue - 625;
-  if (micValue < 0) micValue = -micValue;
+  double micValue_analog = analogRead(micPin2);
 
-  soundLevel = processSound(micValue);
-  sendToAWS(micValue);
 
-  Serial.print("Mic Value 1: ");
-  Serial.println(micValue);
-  
+  sendToAWS(micValue_analog);
+
+  Serial.print("analog value: ");
+  Serial.println(micValue_analog);
+
   // Generate vibration based on sound level.
-  controlVibration(soundLevel);
-  delay(100);
+  if (micValue_analog > 23){
+    controlVibration(micValue_analog);
+  }
+  else {
+    controlVibration(0);
+  }
+  Serial.print("sound level: ");
+  Serial.println(soundLevel);
+  delay(50);
 }
