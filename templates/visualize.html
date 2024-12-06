@@ -19,7 +19,7 @@
     </style>
 </head>
 <body>
-    <h1>Sound Visualizer</h1>
+    <h1>RVRBR8 Sound Visualizer</h1>
     <canvas id="soundChart"></canvas>
 
     <script>
@@ -48,18 +48,10 @@
                 },
                 scales: {
                     x: {
-                        title: {
-                            display: true,
-                            text: 'Timestamp'
-                        }
                     },
                     y: {
-                        title: {
-                            display: true,
-                            text: 'Sound Level'
-                        },
                         min: 0,
-                        max: 1023  // Adjust based on your sensor's range.
+                        max: 250
                     }
                 }
             }
@@ -71,7 +63,7 @@
                 const response = await fetch('/');
                 const data = await response.json();
 
-                // Update chart data
+                // Update chart data.
                 soundChart.data.labels = Array.from({ length: data.length }, (_, i) => i + 1); // Use indices as labels.
                 soundChart.data.datasets[0].data = data;
                 soundChart.update();
