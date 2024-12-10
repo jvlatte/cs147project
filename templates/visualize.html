@@ -20,7 +20,7 @@
 </head>
 <body>
     <h1>RVRBR8 Sound Visualizer</h1>
-    <canvas id="soundChart"></canvas>
+    <canvas id="soundChart" width="800" height="600"></canvas>
 
     <script>
         const ctx = document.getElementById('soundChart').getContext('2d');
@@ -51,7 +51,7 @@
                     },
                     y: {
                         min: 0,
-                        max: 250
+                        max: 100
                     }
                 }
             }
@@ -64,15 +64,18 @@
                 const data = await response.json();
 
                 // Update chart data.
-                soundChart.data.labels = Array.from({ length: data.length }, (_, i) => i + 1); // Use indices as labels.
-                soundChart.data.datasets[0].data = data;
+                // soundChart.data.labels = Array.from({ length: data.length }, (_, i) => i + 1); // Use indices as labels.
+                // soundChart.data.datasets[0].data = data;
+
+                soundChart.data.labels = Array.from({ length: data.length }, (_, i) => i + 1).slice(-10); // Only show last 10 points.
+                soundChart.data.datasets[0].data = data.slice(-10); // Match the data to the labels.
+
                 soundChart.update();
             } catch (error) {
                 console.error("Error fetching sound data:", error);
             }
         }
 
-        // Fetch data periodically (every 50ms).
         setInterval(fetchSoundData, 50);
     </script>
 </body>
