@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <Wire.h>
+#include <cmath>
 #include <Adafruit_DRV2605.h>
 #include <HTTPClient.h>
 #include <WiFi.h>
@@ -18,6 +19,7 @@ const int micPin = 26;
 const int micPin2 = 36;
 int soundLevel = 0;
 const int threshold = 500;
+double last_val = -1;
 
 const char *serverName = "http://3.16.38.103:5000";
 
@@ -151,21 +153,38 @@ void setup() {
 void loop() {
   // Calculate sound level here...
   double micValue_analog = analogRead(micPin2);
+  // double current = micValue_analog;
 
 
   sendToAWS(micValue_analog);
 
-  Serial.print("analog value: ");
-  Serial.println(micValue_analog);
+
 
   // Generate vibration based on sound level.
-  if (micValue_analog > 23){
-    controlVibration(micValue_analog);
+  // if (micValue_analog > 20){
+  //   controlVibration(micValue_analog);
+  // }
+  // else {
+  //   controlVibration(0);
+  // }
+
+  if (last_val != -1) {
+    if (abs(micValue_analog - last_val) > 5) {
+      if (micValue_analog > 23) {
+        controlVibration(micValue_analog);
+      } else {
+        controlVibration(micValue_analog * 2.5);
+      }
+    }
+    else {
+      controlVibration(0);
+    }
+    last_val = micValue_analog;
   }
   else {
     controlVibration(0);
+    last_val = micValue_analog;
   }
-  Serial.print("sound level: ");
-  Serial.println(soundLevel);
+
   delay(50);
 }
