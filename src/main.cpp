@@ -34,8 +34,6 @@ void controlVibration(int level) {
     drv.setRealtimeValue(0); 
   }
 
-  // drv.setRealtimeValue(20); 
-
   // Play vibration.
   drv.go();
 }
@@ -43,40 +41,33 @@ void controlVibration(int level) {
 
 void nvs_access()
 {
-  // Initialize NVS
+  // Initialize NVS.
   esp_err_t err = nvs_flash_init();
   if (err == ESP_ERR_NVS_NO_FREE_PAGES ||
-      err == ESP_ERR_NVS_NEW_VERSION_FOUND)
-  {
-    // NVS partition was truncated and needs to be erased
-    // Retry nvs_flash_init
+      err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+    // If reached, means NVS partition was truncated and needs to be erased. So, retry nvs_flash_init.
     ESP_ERROR_CHECK(nvs_flash_erase());
     err = nvs_flash_init();
   }
   ESP_ERROR_CHECK(err);
-  // Open
+  // Open.
   Serial.printf("\n");
   Serial.printf("Opening Non-Volatile Storage (NVS) handle... ");
   nvs_handle_t my_handle;
   err = nvs_open("storage", NVS_READWRITE, &my_handle);
-  if (err != ESP_OK)
-  {
+  if (err != ESP_OK) {
     Serial.printf("Error (%s) opening NVS handle!\n", esp_err_to_name(err));
   }
-  else
-  {
+  else {
     Serial.printf("Done\n");
     Serial.printf("Retrieving SSID/PASSWD\n");
     size_t ssid_len;
     size_t pass_len;
     err = nvs_get_str(my_handle, "ssid", ssid, &ssid_len);
     err |= nvs_get_str(my_handle, "pass", pass, &pass_len);
-    switch (err)
-    {
+    switch (err) {
     case ESP_OK:
       Serial.printf("Done\n");
-      // Serial.printf("SSID = %s\n", ssid);
-      // Serial.printf("PASSWD = %s\n", pass);
       break;
     case ESP_ERR_NVS_NOT_FOUND:
       Serial.printf("The value is not initialized yet!\n");
@@ -85,12 +76,11 @@ void nvs_access()
       Serial.printf("Error (%s) reading!\n", esp_err_to_name(err));
     }
   }
-  // Close
-
+  // Close.
   nvs_close(my_handle);
 }
 
-// Send sound data to AWS
+// Function to send sound data to AWS.
 void sendToAWS(int level) {
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
@@ -112,10 +102,11 @@ void sendToAWS(int level) {
 }
 
 void setup() {
+  // Setup serial monitor.
   Serial.begin(9600);
   Serial.println("DRV2605 Output Test");
 
-  // Connect to WiFi
+  // Connect to WiFi.
   delay(1000);
   nvs_access();
   delay(1000);
@@ -151,32 +142,25 @@ void setup() {
 }
 
 void loop() {
-  // Calculate sound level here...
+  // Derive sound level here.
   double micValue_analog = analogRead(micPin2);
-  // double current = micValue_analog;
-
-
+  // Send data to AWS.
   sendToAWS(micValue_analog);
 
-
-
-  // Generate vibration based on sound level.
-  // if (micValue_analog > 20){
-  //   controlVibration(micValue_analog);
-  // }
-  // else {
-  //   controlVibration(0);
-  // }
-
+  // Calibrates vibration value before sending to haptic controller.
   if (last_val != -1) {
     if (abs(micValue_analog - last_val) > 5) {
+      // If difference between current value and last value is significant enough, change vibration level.
       if (micValue_analog > 23) {
+        // Set vibration level to that value for high value.
         controlVibration(micValue_analog);
       } else {
+        // Amplify the vibration level then set for low value.
         controlVibration(micValue_analog * 2.5);
       }
     }
     else {
+      // Otherwise, do not vibrate (when wave is flat).
       controlVibration(0);
     }
     last_val = micValue_analog;

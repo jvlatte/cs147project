@@ -65,9 +65,6 @@
                 const data = await response.json();
 
                 // Update chart data.
-                // soundChart.data.labels = Array.from({ length: data.length }, (_, i) => i + 1); // Use indices as labels.
-                // soundChart.data.datasets[0].data = data;
-
                 soundChart.data.labels = Array.from({ length: data.length }, (_, i) => i + 1).slice(-10); // Only show last 10 points.
                 soundChart.data.datasets[0].data = data.slice(-10); // Match the data to the labels.
 
